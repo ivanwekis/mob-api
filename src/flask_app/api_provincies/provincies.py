@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint
 from werkzeug.security import generate_password_hash
-from flask_app.classes.auth import create_key
+from classes.auth import create_key
 from pymongo import MongoClient
 
 
