@@ -14,7 +14,7 @@ db = client["weatherdata"]
 
 
 @provincies.route("/api.download/<date>/<station>", methods=["POST"])
-def download_data_provincie(date, station):
+def downloadDataProvincie(date, station):
     email = request.json["email"]
     key = request.json["key"]
     user = db.users.find_one({"email": email, "key": key})
@@ -34,7 +34,7 @@ def download_data_provincie(date, station):
 
 
 @provincies.route("/api.download/<date>", methods=["POST"])
-def download_data(date):
+def downloadData(date):
     email = request.json["email"]
     key = request.json["key"]
     user = db.users.find_one({"email": email, "key": key})
@@ -55,7 +55,7 @@ def download_data(date):
 
 
 @provincies.route("/new-user", methods=["POST"])
-def new_user():
+def newUser():
     email = request.json["email"]
     password = request.json["password"]
 
@@ -81,9 +81,9 @@ def new_user():
 
 
 @provincies.route("/new-key", methods=["POST"])
-def new_key():
-    username = request["username"]
-    password = request["password"]
+def newKey():
+    username = request.json["username"]
+    password = request.json["password"]
 
     if username and password:
         hased_password = generate_password_hash(password)
@@ -104,13 +104,13 @@ def new_key():
 
 
 @provincies.route("/new-password/<email>", methods=["GET"])
-def new_Password(email):
+def newPassword(email):
     password_link = create_key()
     msg = Message("Recover your password",
                 sender="flaskapp.pruebas@gmail.com",
                 recipients=[email])
-    route = "127.0.0.1:5000/new-password/"+password_link
-    msg.html = render_template("/mail.html", link = route)
+    route = "127.0.0.1:5000/new-password-link/"+password_link
+    msg.body = "To recover your password, please, use these link." + route
     print("Aquí llega")
     mail.send(msg)
 
@@ -118,3 +118,15 @@ def new_Password(email):
     new_values = {"$set": {"link_password": password_link, "link_used": False}}
     id = db.users.update_one(query, new_values)
     return jsonify({"Update": str(id), "response": "The link for reset your password has been activated", "link": password_link})
+
+
+@provincies.route("/new-password-link/<link>", methods=["POST"])
+def recoverPassword(link):
+    new_password = request.json["password"]
+    if new_password:
+        query = {"link_password": link, "link_used": False}
+        new_values = {"$set": {"link_password": new_password, "link_used": True}}
+        id = db.users.update_one(query, new_values)
+        return jsonify({"Update": str(id), "response": "Your new password have been set"})
+    return jsonify({"Update": str(id), "response": "Please, introduce yor new passworw in a JSON."})
+
