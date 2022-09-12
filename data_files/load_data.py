@@ -1,7 +1,7 @@
 from queue import Empty
 from pymongo import MongoClient
 import argparse
-
+import certifi
 
 def read_csv(input_file):
     with open(input_file) as csv_file:
@@ -25,8 +25,9 @@ def read_csv(input_file):
 
 
 def write_csv(input_file, data_list_dictionary):
-    MONGO_URI = "mongodb://localhost"
-    client = MongoClient(MONGO_URI)
+    ca = certifi.where()
+    MONGO_URI = "mongodb+srv://ivanwekis:MmongodbB@cluster0.srdnijs.mongodb.net/test"
+    client = MongoClient(MONGO_URI,tlsCAFile=ca)
     db = client["weatherdata"]
     collection = db[str(input_file).replace(".csv","")]
     for dict in data_list_dictionary:

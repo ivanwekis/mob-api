@@ -6,12 +6,20 @@ from datetime import datetime
 from bson import json_util
 from flask_app import mail
 from flask_mail import Message
+import certifi
+
 
 provincies = Blueprint("provincies", __name__)
-MONGO_URI = "mongodb://localhost"
-client = MongoClient(MONGO_URI)
+
+ca = certifi.where()
+MONGO_URI = "mongodb+srv://ivanwekis:MmongodbB@cluster0.srdnijs.mongodb.net/test"
+client = MongoClient(MONGO_URI,tlsCAFile=ca)
 db = client["weatherdata"]
 
+
+@provincies.route("/",methods=["GET"])
+def home():
+    return "Welcome to mob-api, here you can download data weather. "
 
 @provincies.route("/api.download/<date>/<station>", methods=["POST"])
 def downloadDataProvincie(date, station):
@@ -37,21 +45,24 @@ def downloadDataProvincie(date, station):
 def downloadData(date):
     email = request.json["email"]
     key = request.json["key"]
-    user = db.users.find_one({"email": email, "key": key})
-    if not user is None:
-        try:
-            print("User: {} is correct.".format(email))
-            datetime.strptime(date, "%Y-%m-%d")
-            collection = db.get_collection(date)
-            information = collection.find()
-            response = json_util.dumps(information)
-            return Response(response, mimetype="application/json")
-        except ValueError:
-            return jsonify(
-                {"response": "Incorrect date format. example:'/2022-12-12' "}
-            )
-    else:
-        return jsonify({"response": "The email or key are incorrect."})
+    if email and key:
+        user = db.users.find_one({"email": email, "key": key})
+        if not user is None:
+            try:
+                print("User: {} is correct.".format(email))
+                datetime.strptime(date, "%Y-%m-%d")
+                collection = db.get_collection(date)
+                information = collection.find()
+                response = json_util.dumps(information)
+                return Response(response, mimetype="application/json")
+            except ValueError:
+                return jsonify(
+                    {"response": "Incorrect date format. example:'/2022-12-12' "}
+                )
+        else:
+            return jsonify({"response": "The email or key are incorrect."})
+    else: 
+        return jsonify({"response": "The email or key fields are empty."})
 
 
 @provincies.route("/new-user", methods=["POST"])
